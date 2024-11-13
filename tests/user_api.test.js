@@ -4,12 +4,42 @@ const supertest = require('supertest');
 const app = require('../src/app');
 const bcrypt = require('bcrypt');
 const mongoose = require('mongoose');
-const User = require('../src/models/user.js');
-const helper = require('./helper.js');
+const User = require('../src/models/user');
+const Blog = require('../src/models/blog');
+const helper = require('./helper');
 
 const api = supertest(app);
 
-describe('POST /api/users', async () => {
+beforeEach(async () => {
+	await User.deleteMany({});
+
+	await Promise.all(
+		helper.initialUsers.map(async (user) => {
+			return new User(user).save();
+		})
+	);
+});
+
+beforeEach(async () => {
+	await Blog.deleteMany({});
+
+	const promiseArray = helper.initialBlogs.map((blog) => {
+		const randomIndex = Math.floor(Math.random() * helper.initialUsers.length);
+		const userId = helper.initialUsers[randomIndex]._id;
+		const newBlog = new Blog({ ...blog, user: userId });
+		return newBlog
+			.save()
+			.then(() => (User.findById(userId)))
+			.then(user => {
+				user.blogs.push(newBlog._id);
+				return user.save();
+			});
+	});
+
+	await Promise.all(promiseArray);
+});
+
+describe('POST /api/users/', async () => {
 	describe('when there is one user in the database', async () => {
 		beforeEach(async () => {
 			await User.deleteMany({});
@@ -131,19 +161,6 @@ describe('POST /api/users', async () => {
 });
 
 describe('GET /api/users', async () => {
-	beforeEach(async () => {
-		await User.deleteMany({});
-
-		await Promise.all(
-			helper.initialUsers.map(async (user) => {
-				return new User({
-					...user,
-					passwordHash: await bcrypt.hash(user.password, 10)
-				}).save();
-			})
-		);
-	});
-
 	test('returns all users in the database', async () => {
 		const usersBefore = await helper.usersInDb();
 
@@ -155,6 +172,24 @@ describe('GET /api/users', async () => {
 		assert.strictEqual(response.body.length, usersBefore.length);
 		response.body.forEach(user => {
 			assert.strictEqual(usersBefore.filter(u => u.username === user.username).length, 1);
+		});
+	});
+
+	test('returns blogs created by users', async () => {
+		const response = await api
+			.get('/api/users')
+			.expect(200)
+			.expect('Content-Type', /application\/json/);
+
+		response.body.forEach(u => {
+			assert(Array.isArray(u.blogs));
+			u.blogs.forEach(b => {
+				assert.strictEqual(typeof b.id, 'string');
+				assert.strictEqual(typeof b.title, 'string');
+				assert.strictEqual(typeof b.url, 'string');
+				assert.strictEqual(typeof b.author, 'string');
+				assert.strictEqual(typeof b.user, 'undefined');
+			});
 		});
 	});
 });

@@ -55,14 +55,19 @@ const initialBlogs = [
 
 const initialUsers = [
 	{
+		_id: '673473da506969edcf54460b',
 		username: 'root',
 		name: 'admin',
-		password: 'superuser'
+		passwordHash: '$2b$10$EVp2p6boigvRMLu3rMVvSuInj4.tbBK.pfkLg.kXJ1/BD7.FUGoX2',
+		__v: 0
 	},
 	{
+
+		_id: '673473da506969edcf54460d',
 		username: 'johndoe',
 		name: 'John Doe',
-		password: 'secret-password'
+		passwordHash: '$2b$10$ui6sseNX/VGWYPqHP54bbO9sXxJaJGBfp7/6WN2CI6kyuic4t1VH.',
+		__v: 0
 	}
 ];
 
