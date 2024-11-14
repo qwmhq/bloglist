@@ -5,39 +5,12 @@ const app = require('../src/app');
 const bcrypt = require('bcrypt');
 const mongoose = require('mongoose');
 const User = require('../src/models/user');
-const Blog = require('../src/models/blog');
 const helper = require('./helper');
 
 const api = supertest(app);
 
-beforeEach(async () => {
-	await User.deleteMany({});
-
-	await Promise.all(
-		helper.initialUsers.map(async (user) => {
-			return new User(user).save();
-		})
-	);
-});
-
-beforeEach(async () => {
-	await Blog.deleteMany({});
-
-	const promiseArray = helper.initialBlogs.map((blog) => {
-		const randomIndex = Math.floor(Math.random() * helper.initialUsers.length);
-		const userId = helper.initialUsers[randomIndex]._id;
-		const newBlog = new Blog({ ...blog, user: userId });
-		return newBlog
-			.save()
-			.then(() => (User.findById(userId)))
-			.then(user => {
-				user.blogs.push(newBlog._id);
-				return user.save();
-			});
-	});
-
-	await Promise.all(promiseArray);
-});
+beforeEach(helper.initializeUsersDb);
+beforeEach(helper.initializeBlogsDb);
 
 describe('POST /api/users/', async () => {
 	describe('when there is one user in the database', async () => {

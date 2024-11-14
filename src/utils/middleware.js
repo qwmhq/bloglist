@@ -1,4 +1,6 @@
 const logger = require('./logger');
+const jwt = require('jsonwebtoken');
+const config = require('./config');
 
 const unknownEndpoint = (request, response) => {
 	response.status(404).send({ error: 'unknown endpoint' });
@@ -18,7 +20,30 @@ const errorHandler = (error, request, response, next) => {
 	next(error);
 };
 
+const authenticator = (request, response, next) => {
+	const authorization = request.get('authorization');
+	if (authorization) {
+		request.token = authorization.replace('Bearer ', '');
+		try {
+			const payload = jwt.verify(request.token, config.JWT_SECRET);
+			request.user = { id: payload.id, username: payload.username };
+		} catch {
+			request.user = null;
+		}
+	}
+	next();
+};
+
+const authorizer = (request, response, next) => {
+	if (!request.user) {
+		response.status(401).end();
+	}
+	next();
+};
+
 module.exports = {
 	unknownEndpoint,
 	errorHandler,
+	authenticator,
+	authorizer
 };

@@ -9,33 +9,49 @@ const helper = require('./helper');
 
 const api = supertest(app);
 
+let user = {
+	username: 'john',
+	name: 'john cena',
+	password: 'password'
+};
+const altUser = { ...user, username: 'altJohn' };
+
+const newBlog = {
+	title: 'How to hack NASA using HTML',
+	author: 'Chad Wazowski',
+	url: 'http://blog.wazowski.com/hack_nasa.html',
+	likes: 69,
+};
+
+let token = '';
+let altToken = '';
+
+
 beforeEach(async () => {
-	await User.deleteMany({});
+	await User.findOneAndDelete({ username: user.username });
+	await api
+		.post('/api/users')
+		.send(user);
 
-	await Promise.all(
-		helper.initialUsers.map(async (user) => {
-			return new User(user).save();
-		})
-	);
-});
+	let loginResponse = await api
+		.post('/api/login')
+		.send({
+			username: user.username,
+			password: user.password
+		});
+	token = loginResponse.body.token;
 
-beforeEach(async () => {
-	await Blog.deleteMany({});
-
-	const promiseArray = helper.initialBlogs.map((blog) => {
-		const randomIndex = Math.floor(Math.random() * helper.initialUsers.length);
-		const userId = helper.initialUsers[randomIndex]._id;
-		const newBlog = new Blog({ ...blog, user: userId });
-		return newBlog
-			.save()
-			.then(() => (User.findById(userId)))
-			.then(user => {
-				user.blogs.push(newBlog._id);
-				return user.save();
-			});
-	});
-
-	await Promise.all(promiseArray);
+	await User.findOneAndDelete({ username: altUser.username });
+	await api
+		.post('/api/users')
+		.send(altUser);
+	loginResponse = await api
+		.post('/api/login')
+		.send({
+			username: altUser.username,
+			password: altUser.password
+		});
+	altToken = loginResponse.body.token;
 });
 
 
@@ -53,6 +69,9 @@ describe('GET /api/blogs/', async () => {
 	});
 
 	describe('when db has mublitple blogs', async () => {
+		beforeEach(helper.initializeUsersDb);
+		beforeEach(helper.initializeBlogsDb);
+
 		test('returns blogs in json format', async () => {
 			await api
 				.get('/api/blogs/')
@@ -94,16 +113,17 @@ describe('POST /api/blogs/', async () => {
 		await Blog.deleteMany({});
 	});
 
-	const newBlog = {
-		title: 'How to hack NASA using HTML',
-		author: 'Chad Wazowski',
-		url: 'http://blog.wazowski.com/hack_nasa.html',
-		likes: 69,
-	};
+	test('returns 401 if no token is provided', async () => {
+		await api
+			.post('/api/blogs/')
+			.send(newBlog)
+			.expect(401);
+	});
 
 	test('actually creates a blog in the database', async () => {
 		await api
 			.post('/api/blogs/')
+			.set('Authorization', `Bearer ${token}`)
 			.send(newBlog)
 			.expect(201)
 			.expect('Content-Type', /application\/json/);
@@ -119,6 +139,7 @@ describe('POST /api/blogs/', async () => {
 		const { likes, ...newBlogWithoutLikes } = newBlog;
 		await api
 			.post('/api/blogs/')
+			.set('Authorization', `Bearer ${token}`)
 			.send(newBlogWithoutLikes)
 			.expect(201)
 			.expect('Content-Type', /application\/json/);
@@ -132,6 +153,7 @@ describe('POST /api/blogs/', async () => {
 
 		await api
 			.post('/api/blogs/')
+			.set('Authorization', `Bearer ${token}`)
 			.send(newBlogWithoutTitle)
 			.expect(400)
 			.expect('Content-Type', /application\/json/);
@@ -142,56 +164,109 @@ describe('POST /api/blogs/', async () => {
 
 		await api
 			.post('/api/blogs/')
+			.set('Authorization', `Bearer ${token}`)
 			.send(newBlogWithoutUrl)
 			.expect(400)
 			.expect('Content-Type', /application\/json/);
 	});
 
-	test('\'user\' property is added on created blog', async () => {
+	test('the correct \'user\' property is added to created blog', async () => {
+		const userInDb = await User.findOne({ username: user.username });
+
 		const response = await api
 			.post('/api/blogs/')
+			.set('Authorization', `Bearer ${token}`)
 			.send(newBlog)
 			.expect(201)
 			.expect('Content-Type', /application\/json/);
 
 		assert.notStrictEqual(response.body.user, undefined);
+		assert.strictEqual(response.body.user, userInDb._id.toString());
 	});
 });
 
 describe('DELETE /api/blogs/:id', async () => {
-	const blogIdToDelete = helper.initialBlogs[0]._id;
+	let blogIdToDelete = '';
+	beforeEach(async () => {
+		await Blog.deleteMany({});
+		const response = await api
+			.post('/api/blogs/')
+			.set('Authorization', `Bearer ${token}`)
+			.send(newBlog);
+		blogIdToDelete = response.body.id;
+	});
 
-	test('deletes the blog with given id from the database', async () => {
+	test('blog can only be deleted by an authorized user', async () => {
 		await api
 			.delete(`/api/blogs/${blogIdToDelete}`)
+			.expect(401);
+	});
+
+	test('blog can only be deleted by the user who added it', async () => {
+		await api
+			.delete(`/api/blogs/${blogIdToDelete}`)
+			.set('Authorization', `Bearer ${altToken}`)
+			.expect(403);
+	});
+
+	test('deletes the blog with given id from the database, and removes its id from the user\'s blogs', async () => {
+		await api
+			.delete(`/api/blogs/${blogIdToDelete}`)
+			.set('Authorization', `Bearer ${token}`)
 			.expect(204);
 
 		const blog = await Blog.findById(blogIdToDelete);
 		assert.strictEqual(blog, null);
+
+		const userInDb = await User.findOne({ username: user.username });
+		assert.strictEqual(userInDb.blogs.includes(blogIdToDelete), false);
 	});
 
 	test('returns 404 if a blog with the given id is not found', async () => {
-		await Blog.findByIdAndDelete(blogIdToDelete);
-
 		await api
-			.delete(`/api/blogs/${blogIdToDelete}`)
+			.delete(`/api/blogs/${helper.nonExistingId()}`)
+			.set('Authorization', `Bearer ${token}`)
 			.expect(404);
 	});
 });
 
 describe('PUT /api/blogs/:id', async () => {
-	const blogIdToUpdate = helper.initialBlogs[2]._id;
+	let blogIdToUpdate = helper.initialBlogs[2]._id;
+	beforeEach(async () => {
+		await Blog.deleteMany({});
+		const response = await api
+			.post('/api/blogs/')
+			.set('Authorization', `Bearer ${token}`)
+			.send(newBlog);
+		blogIdToUpdate = response.body.id;
+	});
 
-	test('updates the blog with the given id in the database', async () => {
-		const update = {
-			...helper.initialBlogs[2],
-			likes: 420
-		};
+	const update = {
+		...newBlog,
+		likes: 420
+	};
 
+	test('blog can only be updated by an authorized user', async () => {
 		await api
 			.put(`/api/blogs/${blogIdToUpdate}`)
 			.send(update)
-			.expect(200);
+			.expect(401);
+	});
+
+	test('blog can only be updated by its creator', async () => {
+		await api
+			.put(`/api/blogs/${blogIdToUpdate}`)
+			.send(update)
+			.set('Authorization', `Bearer ${altToken}`)
+			.expect(403);
+	});
+
+	test('updates the blog with the given id in the database', async () => {
+		await api
+			.put(`/api/blogs/${blogIdToUpdate}`)
+			.set('Authorization', `Bearer ${token}`)
+			.send(update)
+			.expect(204);
 
 		const updatedBlog = await Blog.findById(blogIdToUpdate);
 
@@ -199,15 +274,9 @@ describe('PUT /api/blogs/:id', async () => {
 	});
 
 	test('returns 404 if a blog with the given id is not found', async () => {
-		await Blog.findByIdAndDelete(blogIdToUpdate);
-
-		const update = {
-			...helper.initialBlogs[2],
-			likes: 420
-		};
-
 		await api
-			.put(`/api/blogs/${blogIdToUpdate}`)
+			.put(`/api/blogs/${helper.nonExistingId()}`)
+			.set('Authorization', `Bearer ${token}`)
 			.send(update)
 			.expect(404);
 	});

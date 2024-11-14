@@ -1,14 +1,15 @@
 const blogsRouter = require('express').Router();
 const Blog = require('../models/blog');
 const User = require('../models/user');
+const { authorizer } = require('../utils/middleware');
 
 blogsRouter.get('/', async (request, response) => {
 	const blogs = await Blog.find({}).populate('user', { blogs: 0 });
 	response.json(blogs);
 });
 
-blogsRouter.post('/', async (request, response) => {
-	const user = await User.findOne({});
+blogsRouter.post('/', authorizer, async (request, response) => {
+	const user = await User.findById(request.user.id);
 	const blog = new Blog({ user: user._id, ...request.body });
 
 	const result = await blog.save();
@@ -19,35 +20,51 @@ blogsRouter.post('/', async (request, response) => {
 	response.status(201).json(result);
 });
 
-blogsRouter.delete('/:id', async (request, response) => {
-	const blog = await Blog.findByIdAndDelete(request.params.id);
+blogsRouter.delete('/:id', authorizer, async (request, response) => {
+	const blog = await Blog.findById(request.params.id);
 
-	blog
-		? response.status(204).end()
-		: response.status(404).end();
+	if (!blog) {
+		return response.status(404).end();
+	} else if (blog.user.toString() !== request.user.id) {
+		return response.status(403).json({ error: 'blog can only be deleted by its creator!' });
+	}
+
+	await blog.deleteOne();
+
+	const user = await User.findById(blog.user);
+	user.blogs.pop(blog._id);
+
+	await user.save();
+
+	response.status(204).end();
 });
 
-blogsRouter.put('/:id', async (request, response) => {
+blogsRouter.put('/:id', authorizer, async (request, response) => {
 	const body = request.body;
-	const blog = {
+
+	const blogUpdate = {
 		title: body.title,
 		author: body.author,
 		url: body.url,
 		likes: body.likes
 	};
 
-	const updatedBlog = await Blog.findByIdAndUpdate(
-		request.params.id,
-		blog,
+	const blog = await Blog.findById(request.params.id);
+	if (!blog) {
+		return response.status(404).end();
+	} else if (blog.user.toString() !== request.user.id) {
+		return response.status(403).json({ error: 'blog can only be deleted by its creator!' });
+	}
+
+	await blog.updateOne(
+		blogUpdate,
 		{
 			new: true,
 			runValidators: true
 		}
 	);
 
-	updatedBlog
-		? response.json(updatedBlog)
-		: response.status(404).end();
+	response.status(204).end();
 });
 
 module.exports = blogsRouter;

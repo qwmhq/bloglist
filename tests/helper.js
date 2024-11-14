@@ -71,10 +71,38 @@ const initialUsers = [
 	}
 ];
 
-const nonExistingId = async () => {
+const nonExistingId = () => {
 	return new mongoose.Types.ObjectId().toString();
 };
 
+const initializeUsersDb = async () => {
+	await User.deleteMany({});
+
+	await Promise.all(
+		initialUsers.map(async (user) => {
+			return new User(user).save();
+		})
+	);
+};
+
+const initializeBlogsDb = async () => {
+	await Blog.deleteMany({});
+
+	const promiseArray = initialBlogs.map((blog) => {
+		const randomIndex = Math.floor(Math.random() * initialUsers.length);
+		const userId = initialUsers[randomIndex]._id;
+		const newBlog = new Blog({ ...blog, user: userId });
+		return newBlog
+			.save()
+			.then(() => (User.findById(userId)))
+			.then(user => {
+				user.blogs.push(newBlog._id);
+				return user.save();
+			});
+	});
+
+	await Promise.all(promiseArray);
+};
 
 const usersInDb = async () => {
 	const users = await User.find({});
@@ -87,5 +115,11 @@ const blogsInDb = async () => {
 };
 
 module.exports = {
-	initialBlogs, nonExistingId, blogsInDb, initialUsers, usersInDb
+	initialBlogs,
+	nonExistingId,
+	blogsInDb,
+	initialUsers,
+	usersInDb,
+	initializeUsersDb,
+	initializeBlogsDb
 };
