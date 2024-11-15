@@ -10,7 +10,6 @@ const BlogForm = ({ onSuccess, onFailure }) => {
     event.preventDefault();
     try {
       const response = await blogService.create({ title, author, url });
-      console.log('response:', response);
       onSuccess(response);
     } catch (error) {
       onFailure(error.response.data.error);

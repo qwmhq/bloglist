@@ -17,6 +17,7 @@ module.exports = {
       { allowConstantExport: true },
     ],
     'react/prop-types': 0,
+    "react/react-in-jsx-scope": "off",
     'indent': [
       'error',
       2,
@@ -42,5 +43,11 @@ module.exports = {
     'arrow-spacing': [
       'error', { 'before': true, 'after': true },
     ],
+    "linebreak-style": [
+      "error",
+      "unix"
+    ],
+    "no-console": 0,
+    "no-unused-vars": 0
   },
 }
