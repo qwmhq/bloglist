@@ -19,11 +19,19 @@ module.exports = {
     'react/prop-types': 0,
     'indent': [
       'error',
-      'tab'
+      2,
+    ],
+    'react/jsx-indent': [
+      'error',
+      2
     ],
     'semi': [
       'error',
       'always'
+    ],
+    'quotes': [
+      'error',
+      'single'
     ],
     'eqeqeq': 'error',
     'no-trailing-spaces': 'error',
