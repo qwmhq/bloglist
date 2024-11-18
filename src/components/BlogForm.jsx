@@ -1,18 +1,16 @@
 import { useState } from 'react';
-import blogService from '../services/blogs';
 
-const BlogForm = ({ onSuccess, onFailure }) => {
+const BlogForm = ({ submitFn }) => {
   const [title, setTitle] = useState('');
   const [author, setAuthor] = useState('');
   const [url, setUrl] = useState('');
 
   const onSubmit = async (event) => {
     event.preventDefault();
-    try {
-      const response = await blogService.create({ title, author, url });
-      onSuccess(response);
-    } catch (error) {
-      onFailure(error.response.data.error);
+    if (await submitFn({ title, author, url })) {
+      setTitle('');
+      setAuthor('');
+      setUrl('');
     }
   };
 

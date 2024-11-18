@@ -62,12 +62,23 @@ const App = () => {
     blogService.clearToken();
   };
 
-  const onBlogFormSuccess = (response) => {
-    setBlogs(blogs.concat(response));
-    noteFormRef.current.toggleVisibility();
-    showNotification({
-      message: `a new blog "${response.title}" by ${response.author} has been added`
-    });
+  const submitBlog = async ({ title, author, url }) => {
+    try {
+      const response = await blogService.create({ title, author, url });
+      setBlogs(blogs.concat(response));
+      noteFormRef.current.toggleVisibility();
+      showNotification({
+        message: `a new blog "${response.title}" by ${response.author} has been added`,
+        isError: false
+      });
+      return true;
+    } catch (error) {
+      showNotification({
+        message: error.response.data.error,
+        isError: true
+      });
+      return false;
+    }
   };
 
   const onFailure = (message) => showNotification({ message, isError: true });
@@ -115,7 +126,7 @@ const App = () => {
               <button onClick={onLogout}>log out</button>
             </div>
             <Togglable buttonLabel='create new' ref={noteFormRef}>
-              <BlogForm onSuccess={onBlogFormSuccess} onFailure={onFailure} />
+              <BlogForm submitFn={submitBlog} />
             </Togglable>
             {blogs.map(blog =>
               <Blog key={blog.id} blog={blog} updateFn={updateBlog} deleteFn={deleteBlog} showDeleteBtn={user.username === blog.user.username} />
