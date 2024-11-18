@@ -3,12 +3,14 @@ const mongoose = require('mongoose');
 const blogSchema = new mongoose.Schema({
 	title: {
 		type: String,
-		required: [true, 'title required']
+		required: [true, 'title required'],
+		minLength: 3
 	},
 	author: String,
 	url: {
 		type: String,
-		required: [true, 'url required']
+		required: [true, 'url required'],
+		minLength: 5
 	},
 	likes: {
 		type: Number,

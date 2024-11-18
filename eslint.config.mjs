@@ -21,7 +21,8 @@ export default [
     rules: {
       '@stylistic/js/indent': [
         'error',
-        'tab'
+        'tab',
+        { 'SwitchCase': 1 },
       ],
       '@stylistic/js/linebreak-style': [
         'error',

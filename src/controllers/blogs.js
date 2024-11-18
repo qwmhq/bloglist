@@ -17,6 +17,8 @@ blogsRouter.post('/', authorizer, async (request, response) => {
 	user.blogs.push(result._id);
 	await user.save();
 
+	await result.populate('user', { blogs: 0 });
+
 	response.status(201).json(result);
 });
 
@@ -52,9 +54,10 @@ blogsRouter.put('/:id', authorizer, async (request, response) => {
 	const blog = await Blog.findById(request.params.id);
 	if (!blog) {
 		return response.status(404).end();
-	} else if (blog.user.toString() !== request.user.id) {
-		return response.status(403).json({ error: 'blog can only be deleted by its creator!' });
 	}
+	// else if (blog.user.toString() !== request.user.id) {
+	// 	return response.status(403).json({ error: 'blog can only be updated by its creator!' });
+	// }
 
 	await blog.updateOne(
 		blogUpdate,

@@ -181,7 +181,9 @@ describe('POST /api/blogs/', async () => {
 			.expect('Content-Type', /application\/json/);
 
 		assert.notStrictEqual(response.body.user, undefined);
-		assert.strictEqual(response.body.user, userInDb._id.toString());
+		assert.strictEqual(response.body.user.id, userInDb._id.toString());
+		assert.strictEqual(response.body.user.username, userInDb.username);
+		assert.strictEqual(response.body.user.name, userInDb.name);
 	});
 });
 
@@ -271,6 +273,24 @@ describe('PUT /api/blogs/:id', async () => {
 		const updatedBlog = await Blog.findById(blogIdToUpdate);
 
 		assert.strictEqual(updatedBlog.likes, update.likes);
+	});
+
+	test('updates are validated before applying', async () => {
+		const invalidUpdate = {
+			...update,
+			title: 'u',
+			url: 'aa'
+		};
+
+		await api
+			.put(`/api/blogs/${blogIdToUpdate}`)
+			.set('Authorization', `Bearer ${token}`)
+			.send(invalidUpdate)
+			.expect(400);
+
+		const blogInDb = await Blog.findById(blogIdToUpdate);
+		assert(blogInDb.title !== invalidUpdate.title);
+		assert(blogInDb.url !== invalidUpdate.url);
 	});
 
 	test('returns 404 if a blog with the given id is not found', async () => {
