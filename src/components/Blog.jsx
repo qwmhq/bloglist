@@ -22,7 +22,10 @@ const Blog = ({ blog, updateFn, deleteFn, showDeleteBtn }) => {
         view &&
         <div>
           <div>{blog.url}</div>
-          <div>likes {blog.likes} <button onClick={() => likeBlog(blog)}>like</button></div>
+          <div>
+            <div>likes {blog.likes}</div>
+            <button onClick={() => likeBlog(blog)}>like</button>
+          </div>
           <div>{blog.user.name}</div>
           {
             showDeleteBtn &&

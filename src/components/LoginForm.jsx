@@ -21,8 +21,8 @@ const LoginForm = ({ onSuccess, onFailure }) => {
     <div>
       <h2>log in to application</h2>
       <form onSubmit={onSubmit}>
-        <div>username: <input type='text' value={username} onChange={e => setUsername(e.target.value)} /></div>
-        <div>password: <input type='password' value={password} onChange={e => setPassword(e.target.value)} /></div>
+        <div>username: <input data-testid='username' type='text' value={username} onChange={e => setUsername(e.target.value)} /></div>
+        <div>password: <input data-testid='password' type='password' value={password} onChange={e => setPassword(e.target.value)} /></div>
         <button type='submit'>submit</button>
       </form>
     </div>
