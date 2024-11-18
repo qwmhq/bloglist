@@ -92,7 +92,7 @@ describe('Blog app', () => {
         await expect(locator).toHaveText(`likes ${prevLikes + 1}`);
       });
 
-      test.only('a blog can be deleted by its creator', async({ page }) => {
+      test('a blog can be deleted by its creator', async({ page }) => {
         await page.getByRole('button', { name: 'view' }).click();
 
         page.on('dialog', dialog => dialog.accept());
