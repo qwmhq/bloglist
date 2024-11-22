@@ -1,8 +1,8 @@
-import PropTypes from 'prop-types';
-import { useState } from 'react';
+import PropTypes from "prop-types";
+import { useState } from "react";
 
 const Blog = ({ blog, updateFn, deleteFn, showDeleteBtn }) => {
-  const [view, setView] = useState((false));
+  const [view, setView] = useState(false);
   const toggleView = () => {
     setView(!view);
   };
@@ -13,13 +13,12 @@ const Blog = ({ blog, updateFn, deleteFn, showDeleteBtn }) => {
   };
 
   return (
-    <div className='blog'>
+    <div className="blog">
       <div>
         {blog.title} {blog.author}
-        <button onClick={toggleView}>{view ? 'hide' : 'view'}</button>
+        <button onClick={toggleView}>{view ? "hide" : "view"}</button>
       </div>
-      {
-        view &&
+      {view && (
         <div>
           <div>{blog.url}</div>
           <div>
@@ -27,14 +26,13 @@ const Blog = ({ blog, updateFn, deleteFn, showDeleteBtn }) => {
             <button onClick={() => likeBlog(blog)}>like</button>
           </div>
           <div>{blog.user.name}</div>
-          {
-            showDeleteBtn &&
+          {showDeleteBtn && (
             <div>
               <button onClick={() => deleteFn(blog)}>remove</button>
             </div>
-          }
+          )}
         </div>
-      }
+      )}
     </div>
   );
 };
@@ -43,7 +41,7 @@ Blog.proptypes = {
   blog: PropTypes.object.isRequired,
   updateFn: PropTypes.func.isRequired,
   deleteFn: PropTypes.func.isRequired,
-  showDeleteBtn: PropTypes.bool.isRequired
+  showDeleteBtn: PropTypes.bool.isRequired,
 };
 
 export default Blog;
