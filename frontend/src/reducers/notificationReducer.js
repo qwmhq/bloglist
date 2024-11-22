@@ -26,14 +26,16 @@ const notificationSlice = createSlice({
   },
 });
 
-export const showBriefNotification = (notification, duration) => {
+export const showBriefNotification = (notification) => {
   return (dispatch) => {
     const timeoutId = setTimeout(
       () => dispatch(notificationSlice.actions.clearNotification()),
-      duration * 1000,
+      5000,
     );
     dispatch(notificationSlice.actions.clearTimeoutId());
-    dispatch(notificationSlice.actions.setNotification({ ...notification, timeoutId }));
+    dispatch(
+      notificationSlice.actions.setNotification({ ...notification, timeoutId }),
+    );
   };
 };
 

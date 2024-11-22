@@ -1,19 +1,29 @@
 import { useState } from "react";
 import loginService from "../services/login.js";
+import { useDispatch } from "react-redux";
+import { setCurrentUser } from "../reducers/userReducer.js";
+import { showBriefNotification } from "../reducers/notificationReducer.js";
 
-const LoginForm = ({ onSuccess, onFailure }) => {
+const LoginForm = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+
+  const dispatch = useDispatch();
 
   const onSubmit = async (event) => {
     event.preventDefault();
     try {
       const response = await loginService.login(username, password);
-      onSuccess(response);
+      dispatch(setCurrentUser(response));
       setUsername("");
       setPassword("");
     } catch (error) {
-      onFailure(error.response.data.error);
+      dispatch(
+        showBriefNotification({
+          message: error.response.data.error,
+          isError: true,
+        }),
+      );
     }
   };
 
