@@ -1,20 +1,19 @@
 import { useState, useEffect, useRef } from "react";
+import { useDispatch } from "react-redux";
+import blogService from "./services/blogs";
+import { showBriefNotification } from "./reducers/notificationReducer";
 import Blog from "./components/Blog";
+import BlogForm from "./components/BlogForm";
 import LoginForm from "./components/LoginForm";
 import Notification from "./components/Notification";
-import blogService from "./services/blogs";
-import BlogForm from "./components/BlogForm";
 import Togglable from "./components/Togglable";
 
 const localStorageUserKey = "loggedBloglistUser";
 
 const App = () => {
+  const dispatch = useDispatch();
   const [blogs, setBlogs] = useState([]);
   const [user, setUser] = useState(null);
-  const [notification, setNotification] = useState({
-    message: null,
-    isError: false,
-  });
 
   const noteFormRef = useRef(null);
 
@@ -47,8 +46,7 @@ const App = () => {
   }, []);
 
   const showNotification = ({ message, isError }) => {
-    setNotification({ message, isError });
-    setTimeout(() => setNotification({ message: null, isError: false }), 5000);
+    dispatch(showBriefNotification({ message, isError }, 5));
   };
 
   const onLoginSucces = (response) => {
@@ -87,6 +85,10 @@ const App = () => {
     try {
       await blogService.update(id, updatedBlog);
       setBlogs(sortBlogs(blogs.map((b) => (b.id === id ? updatedBlog : b))));
+      showNotification(
+        { message: `updated '${updatedBlog.title}'`, isError: false },
+        5,
+      );
     } catch (error) {
       showNotification({
         message: error.response.data.error,
@@ -115,10 +117,7 @@ const App = () => {
 
   return (
     <div>
-      <Notification
-        message={notification.message}
-        isError={notification.isError}
-      />
+      <Notification />
       {user === null ? (
         <LoginForm onSuccess={onLoginSucces} onFailure={onFailure} />
       ) : (
