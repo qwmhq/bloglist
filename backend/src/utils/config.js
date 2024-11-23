@@ -1,14 +1,14 @@
-require('dotenv').config();
+require("dotenv").config();
 
 const PORT = process.env.PORT;
 
 let MONGODB_URI;
 
 switch (process.env.NODE_ENV) {
-	case 'test':
+	case "test":
 		MONGODB_URI = process.env.TEST_MONGODB_URI;
 		break;
-	case 'development':
+	case "development":
 		MONGODB_URI = process.env.DEV_MONGODB_URI;
 		break;
 	default:
@@ -20,5 +20,5 @@ const JWT_SECRET = process.env.JWT_SECRET;
 module.exports = {
 	PORT,
 	MONGODB_URI,
-	JWT_SECRET
+	JWT_SECRET,
 };
