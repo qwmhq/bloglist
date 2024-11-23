@@ -1,55 +1,39 @@
-import { useEffect, useRef } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useEffect } from "react";
+import { useDispatch } from "react-redux";
 import { initializeBlogs } from "./reducers/blogReducer";
-import {
-  clearCurrentUser,
-  initializeCurrentUser,
-} from "./reducers/userReducer";
+import { initializeCurrentUser } from "./reducers/userReducer";
+import { Routes, Route } from "react-router-dom";
 
 import BlogForm from "./components/BlogForm";
 import BlogList from "./components/BlogList";
+import BlogView from "./components/BlogView";
+import Layout from "./components/Layout";
 import LoginForm from "./components/LoginForm";
-import Notification from "./components/Notification";
-import Togglable from "./components/Togglable";
-
+import User from "./components/User";
+import Users from "./components/Users";
 
 const App = () => {
   const dispatch = useDispatch();
-
-  const noteFormRef = useRef(null);
 
   useEffect(() => {
     dispatch(initializeBlogs());
   }, []);
 
-  const user = useSelector((state) => state.users.current);
   useEffect(() => {
     dispatch(initializeCurrentUser());
   }, []);
 
-  const onLogout = () => {
-    dispatch(clearCurrentUser());
-  };
-
   return (
-    <div>
-      <Notification />
-      {user === null ? (
-        <LoginForm />
-      ) : (
-        <div>
-          <h2>blogs</h2>
-          <div>
-            {user.name} logged in
-            <button onClick={onLogout}>log out</button>
-          </div>
-          <Togglable buttonLabel="create new" ref={noteFormRef}>
-            <BlogForm />
-          </Togglable>
-          <BlogList />
-        </div>
-      )}
-    </div>
+    <Routes>
+      <Route element={<Layout />}>
+        <Route index element={<BlogList />} />
+        <Route path="/create" element={<BlogForm />} />
+        <Route path="/users" element={<Users />} />
+        <Route path="/users/:id" element={<User />} />
+        <Route path="/blogs/:id" element={<BlogView />} />
+      </Route>
+      <Route path="/login" element={<LoginForm />} />
+    </Routes>
   );
 };
 

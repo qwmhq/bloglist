@@ -3,12 +3,17 @@ import loginService from "../services/login.js";
 import { useDispatch } from "react-redux";
 import { setCurrentUser } from "../reducers/userReducer.js";
 import { showBriefNotification } from "../reducers/notificationReducer.js";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const LoginForm = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const from = location.state?.from?.pathname || "/";
 
   const onSubmit = async (event) => {
     event.preventDefault();
@@ -17,6 +22,7 @@ const LoginForm = () => {
       dispatch(setCurrentUser(response));
       setUsername("");
       setPassword("");
+      navigate(from, { replace: true });
     } catch (error) {
       dispatch(
         showBriefNotification({

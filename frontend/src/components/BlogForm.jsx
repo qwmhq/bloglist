@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { showBriefNotification } from "../reducers/notificationReducer";
 import { createBlog } from "../reducers/blogReducer";
+import { useNavigate } from "react-router-dom";
 
 const BlogForm = () => {
   const [title, setTitle] = useState("");
@@ -9,6 +10,7 @@ const BlogForm = () => {
   const [url, setUrl] = useState("");
 
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const onSubmit = async (event) => {
     event.preventDefault();
@@ -23,6 +25,7 @@ const BlogForm = () => {
       setTitle("");
       setAuthor("");
       setUrl("");
+      navigate("/");
     } catch (error) {
       dispatch(
         showBriefNotification({
