@@ -1,8 +1,14 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
-import { initializeBlogs, likeBlog, removeBlog } from "../reducers/blogReducer";
+import {
+  commentOnBlog,
+  initializeBlogs,
+  likeBlog,
+  removeBlog,
+} from "../reducers/blogReducer";
 import { showBriefNotification } from "../reducers/notificationReducer";
+import { useField } from "../hooks";
 
 const BlogView = () => {
   const dispatch = useDispatch();
@@ -19,6 +25,8 @@ const BlogView = () => {
   useEffect(() => {
     dispatch(initializeBlogs());
   }, []);
+
+  const [comment, resetComment] = useField("text");
 
   const like = async (blog) => {
     try {
@@ -62,6 +70,27 @@ const BlogView = () => {
     }
   };
 
+  const addComment = async (event) => {
+    event.preventDefault();
+    try {
+      await dispatch(commentOnBlog(blog, comment.value));
+      dispatch(
+        showBriefNotification({
+          message: "comment added!",
+          isError: false,
+        }),
+      );
+      resetComment();
+    } catch (error) {
+      dispatch(
+        showBriefNotification({
+          message: error.response.data.error,
+          isError: true,
+        }),
+      );
+    }
+  };
+
   if (!blog) {
     return null;
   }
@@ -77,6 +106,14 @@ const BlogView = () => {
       {user.id === blog.user.id && (
         <button onClick={() => remove(blog)}>remove</button>
       )}
+      <h3>comments</h3>
+      <form onSubmit={addComment}>
+        <input {...comment} />
+        <button type="submit">add comment</button>
+      </form>
+      <ul>
+        {blog.comments.map(c => <li key={c.id}>{c.content}</li>)}
+      </ul>
     </div>
   );
 };
