@@ -112,7 +112,9 @@ const BlogView = () => {
         <button type="submit">add comment</button>
       </form>
       <ul>
-        {blog.comments.map(c => <li key={c.id}>{c.content}</li>)}
+        {blog.comments.map((c) => (
+          <li key={c.id}>{c.content}</li>
+        ))}
       </ul>
     </div>
   );
