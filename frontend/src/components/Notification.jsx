@@ -8,7 +8,11 @@ const Notification = () => {
   }
 
   return (
-    <div className={`notification ${isError ? "error" : ""}`}>{message}</div>
+    <div
+      className={`z-20 fixed right-4 bottom-8 max-w-64 sm:max-w-96 p-4 rounded-lg shadow border-2 bg-gray-50 text-xl font-medium ${isError ? "text-red-600" : "text-green-600"}`}
+    >
+      {message}
+    </div>
   );
 };
 

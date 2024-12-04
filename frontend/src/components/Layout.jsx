@@ -1,6 +1,5 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import Header from "./Header";
-import Notification from "./Notification";
 import { useSelector } from "react-redux";
 
 const Layout = () => {
@@ -18,12 +17,12 @@ const Layout = () => {
   }
 
   return (
-    <>
+    <div className="text-gray-900">
       <Header />
-      <Notification />
-      <h2>blogs</h2>
-      <Outlet />
-    </>
+      <div className="p-4">
+        <Outlet />
+      </div>
+    </div>
   );
 };
 
